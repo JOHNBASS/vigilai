@@ -1,0 +1,87 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - heading "VigilAI POC" [level=1] [ref=e5]
+      - paragraph [ref=e6]:
+        - text: 用一句話，讓 AI 守望你的鏡頭。
+        - text: 打開 webcam，用自然語言描述要偵測什麼，命中時即時推播到 Telegram。
+      - generic [ref=e7]:
+        - heading "核心功能" [level=3] [ref=e8]
+        - list [ref=e9]:
+          - listitem [ref=e10]: 自然語言定義偵測 寫一句 prompt 就能偵測，免訓練、免標註資料
+          - listitem [ref=e11]: 即時 Webcam 分析 瀏覽器開鏡頭，每隔數秒由 VLM（qwen2.5-VL）看畫面
+          - listitem [ref=e12]: Telegram 即時通知 命中時把「觸發截圖 + 說明」推到你手機
+          - listitem [ref=e13]: 數值 / 布林雙模式 OCR 讀數字做門檻比較，或是/否事件偵測
+          - listitem [ref=e14]: 冷卻防洪水 每條規則可設 cooldown，避免連續洗版告警
+      - generic [ref=e15]:
+        - heading "運用場景" [level=3] [ref=e16]
+        - generic [ref=e17]: 🌡️ 高溫警報（溫度 ≥ 門檻） 🔥 火災 / 濃煙偵測 😴 打瞌睡 / 疲勞偵測 ✋ 手勢辨識 🚸 入侵 / 有人偵測 🏭 產線瑕疵檢查 👶 嬰幼兒 / 寵物看護 📟 儀表板讀值監看
+    - generic [ref=e18]:
+      - heading "登入" [level=2] [ref=e19]
+      - paragraph [ref=e20]: 輸入存取密碼以開始
+      - textbox "存取密碼" [ref=e21]
+      - button "進入" [ref=e22]
+  - generic [ref=e23]:
+    - banner [ref=e24]:
+      - heading "VigilAI POC" [level=1] [ref=e25]
+      - generic [ref=e26]: "model: - Telegram: - Ollama: -"
+    - main [ref=e27]:
+      - generic [ref=e28]:
+        - generic [ref=e32]: 分析中… 0.0s
+        - generic [ref=e33]:
+          - button "開啟攝影機" [ref=e34]
+          - generic [ref=e35]:
+            - text: 間隔(秒)
+            - spinbutton "間隔(秒)" [ref=e36]: "3"
+          - button "開始偵測" [disabled] [ref=e37]
+        - generic [ref=e38]:
+          - strong [ref=e39]: Telegram
+          - button "撈 chat_id" [ref=e40]
+          - button "測試通知" [ref=e41]
+      - generic [ref=e43]:
+        - heading "偵測規則" [level=2] [ref=e44]
+        - button "+ 新增" [ref=e45]
+      - generic [ref=e47]:
+        - heading "即時 Log" [level=2] [ref=e48]
+        - button "清除" [ref=e49]
+  - generic [ref=e51]:
+    - heading "新增規則" [level=3] [ref=e52]
+    - generic [ref=e53]:
+      - text: 名稱
+      - textbox "名稱" [ref=e54]:
+        - /placeholder: 例如：高溫警報
+    - generic [ref=e55]:
+      - text: Prompt（自然語言描述要偵測什麼）
+      - textbox "Prompt（自然語言描述要偵測什麼）" [ref=e56]:
+        - /placeholder: 例如：讀出畫面中溫度計顯示的數字
+    - generic [ref=e57]:
+      - text: 觸發型態
+      - combobox "觸發型態" [ref=e58]:
+        - option "布林（是/否偵測，如火災、手勢、瞌睡）" [selected]
+        - option "數值（讀數字後比較，如溫度 ≥ 38）"
+    - generic [ref=e59]:
+      - generic [ref=e60]:
+        - text: 運算子
+        - combobox "運算子" [ref=e61]:
+          - option ">=" [selected]
+          - option "<="
+          - option ">"
+          - option "<"
+          - option "=="
+      - generic [ref=e62]:
+        - text: 門檻值
+        - spinbutton "門檻值" [ref=e63]
+    - generic [ref=e65]:
+      - text: 信心門檻 (0-100)
+      - spinbutton "信心門檻 (0-100)" [ref=e66]: "60"
+    - generic [ref=e67]:
+      - generic [ref=e68]:
+        - text: Cooldown(秒)
+        - spinbutton "Cooldown(秒)" [ref=e69]: "60"
+      - generic [ref=e70]:
+        - text: 通知前綴
+        - textbox "通知前綴" [ref=e71]:
+          - /placeholder: 🔥 疑似火災
+    - generic [ref=e72]:
+      - button "取消" [ref=e73]
+      - button "儲存" [ref=e74]

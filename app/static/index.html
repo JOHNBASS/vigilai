@@ -9,12 +9,47 @@
 <body>
   <!-- 密碼 gate -->
   <div id="gate" class="gate">
-    <div class="gate-box">
-      <h1>VigilAI <span class="tag">POC</span></h1>
-      <p>Webcam Prompt Detection</p>
-      <input id="pw" type="password" placeholder="存取密碼" autocomplete="current-password" />
-      <button id="loginBtn">進入</button>
-      <div id="gateErr" class="err"></div>
+    <div class="gate-grid">
+      <!-- 左：產品介紹 -->
+      <div class="intro">
+        <h1 class="brand">VigilAI <span class="tag">POC</span></h1>
+        <p class="lead">用一句話，讓 AI 守望你的鏡頭。<br />
+          打開 webcam，用自然語言描述要偵測什麼，命中時即時推播到 Telegram。</p>
+
+        <div class="intro-block">
+          <h3>核心功能</h3>
+          <ul class="feat">
+            <li><b>自然語言定義偵測</b>　寫一句 prompt 就能偵測，免訓練、免標註資料</li>
+            <li><b>即時 Webcam 分析</b>　瀏覽器開鏡頭，每隔數秒由 VLM（qwen2.5-VL）看畫面</li>
+            <li><b>Telegram 即時通知</b>　命中時把「觸發截圖 + 說明」推到你手機</li>
+            <li><b>數值 / 布林雙模式</b>　OCR 讀數字做門檻比較，或是/否事件偵測</li>
+            <li><b>冷卻防洪水</b>　每條規則可設 cooldown，避免連續洗版告警</li>
+          </ul>
+        </div>
+
+        <div class="intro-block">
+          <h3>運用場景</h3>
+          <div class="cases">
+            <span class="case">🌡️ 高溫警報（溫度 ≥ 門檻）</span>
+            <span class="case">🔥 火災 / 濃煙偵測</span>
+            <span class="case">😴 打瞌睡 / 疲勞偵測</span>
+            <span class="case">✋ 手勢辨識</span>
+            <span class="case">🚸 入侵 / 有人偵測</span>
+            <span class="case">🏭 產線瑕疵檢查</span>
+            <span class="case">👶 嬰幼兒 / 寵物看護</span>
+            <span class="case">📟 儀表板讀值監看</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右：登入 -->
+      <div class="gate-box">
+        <h2>登入</h2>
+        <p class="muted">輸入存取密碼以開始</p>
+        <input id="pw" type="password" placeholder="存取密碼" autocomplete="current-password" />
+        <button id="loginBtn">進入</button>
+        <div id="gateErr" class="err"></div>
+      </div>
     </div>
   </div>
 

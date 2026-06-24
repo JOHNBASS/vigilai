@@ -30,15 +30,45 @@ label input, label textarea, label select { margin-top: 4px; }
 .muted { color: var(--muted); font-size: 13px; }
 
 /* gate */
-.gate { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); z-index: 50; }
-.gate-box { background: var(--panel); padding: 36px; border-radius: 14px; width: 320px; text-align: center; border: 1px solid var(--line); }
-.gate-box p { color: var(--muted); margin-top: 4px; }
-.gate-box input { margin: 18px 0 12px; }
+.gate {
+  position: fixed; inset: 0; overflow-y: auto; z-index: 50;
+  display: flex; align-items: center; justify-content: center; padding: 32px;
+  background:
+    radial-gradient(900px 500px at 15% 0%, rgba(59,130,246,.16), transparent 60%),
+    radial-gradient(700px 500px at 100% 100%, rgba(34,197,94,.10), transparent 55%),
+    var(--bg);
+}
+.gate-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 48px; max-width: 1100px; width: 100%; align-items: center; }
+
+/* 左：介紹 */
+.intro .brand { font-size: 44px; letter-spacing: .5px; }
+.intro .lead { color: var(--muted); font-size: 16px; line-height: 1.7; margin: 14px 0 28px; }
+.intro-block { margin-top: 22px; }
+.intro-block h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+.feat { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.feat li { position: relative; padding-left: 24px; font-size: 14px; color: var(--text); line-height: 1.5; }
+.feat li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--green); font-weight: 700; }
+.feat b { color: #fff; }
+.cases { display: flex; flex-wrap: wrap; gap: 8px; }
+.case { background: var(--panel2); border: 1px solid var(--line); border-radius: 20px; padding: 7px 13px; font-size: 13px; color: var(--text); }
+
+/* 右：登入卡 */
+.gate-box { background: var(--panel); padding: 36px; border-radius: 16px; width: 100%; max-width: 360px; text-align: center; border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+.gate-box h2 { font-size: 24px; }
+.gate-box p { color: var(--muted); margin-top: 6px; }
+.gate-box input { margin: 20px 0 12px; }
 .gate-box button { width: 100%; }
+
+@media (max-width: 860px) {
+  .gate { align-items: flex-start; }
+  .gate-grid { grid-template-columns: 1fr; gap: 32px; max-width: 460px; }
+  .gate-box { max-width: none; margin: 0 auto; }
+  .intro .brand { font-size: 34px; }
+}
 
 /* layout */
 .app { display: flex; flex-direction: column; height: 100vh; }
-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--line); }
+header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 18px; border-bottom: 1px solid var(--line); }
 .status { display: flex; gap: 8px; flex-wrap: wrap; }
 .badge { background: var(--panel2); padding: 4px 9px; border-radius: 6px; font-size: 12px; color: var(--muted); }
 .badge.ok { color: var(--green); } .badge.bad { color: var(--red); }
@@ -78,13 +108,42 @@ video { width: 100%; height: 100%; object-fit: cover; }
 
 /* modal */
 .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 40; }
-.modal-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; width: 460px; max-height: 90vh; overflow-y: auto; }
+.modal { padding: 16px; }
+.modal-box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; width: min(460px, 100%); max-height: 90vh; overflow-y: auto; }
 .modal-box h3 { margin-bottom: 10px; }
 .row { display: flex; gap: 10px; }
 .row label { flex: 1; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 
-@media (max-width: 900px) {
-  main { grid-template-columns: 1fr; overflow-y: auto; }
-  body { overflow: auto; }
+/* ---- RWD ---------------------------------------------------------------- */
+
+/* 平板：相機置頂滿版，規則 / Log 並排於下；改為頁面捲動 */
+@media (max-width: 1024px) {
+  body { overflow: auto; height: auto; }
+  .app { height: auto; min-height: 100vh; }
+  main {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "cam cam" "rules log";
+    overflow: visible;
+  }
+  .cam-col { grid-area: cam; }
+  .rules-col { grid-area: rules; }
+  .log-col { grid-area: log; }
+  .rules-list, .log { max-height: 55vh; }
 }
+
+/* 手機：全部單欄堆疊 */
+@media (max-width: 680px) {
+  header { padding: 10px 14px; }
+  header h1 { font-size: 20px; }
+  main {
+    grid-template-columns: 1fr;
+    grid-template-areas: "cam" "rules" "log";
+    gap: 10px; padding: 10px;
+  }
+  .rules-list, .log { max-height: 50vh; }
+  .controls label { min-width: 70px; }
+  .intro .brand { font-size: 28px; }
+  .intro .lead { font-size: 15px; }
+}
+
