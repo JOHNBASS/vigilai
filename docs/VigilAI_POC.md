@@ -10,7 +10,7 @@
 
 ## 1. POC 目標（一句話）
 
-> 打開網頁 → 授權 webcam → 輸入一句自然語言 prompt（描述要偵測什麼）→ 系統持續看畫面 → 命中時透過 Telegram bot 把「畫面截圖 + 說明」推到手機。
+> 打開網頁 → 授權 webcam → 輸入一句自然語言 prompt（描述要偵測什麼，**可儲存、下次直接讀取沿用**）→ 系統持續看畫面 → 命中時透過 Telegram bot 把「畫面截圖 + 說明」推到手機。
 
 **驗收標準（Definition of Done）**：以下四個情境各能成功推一則 Telegram 通知
 
@@ -32,7 +32,7 @@
 | Rule 數量 | 1～N 條（同一支 webcam） | 多攝影機 × 多 rule |
 | 模型 | 固定 `qwen2.5vl:7b`（單一外部端點） | 多模型、雲端 fallback、模型比較 |
 | 通知 | **Telegram bot（sendPhoto）** | 通用 Webhook、Slack/LINE/Discord、HMAC 簽名 |
-| 持久化 | **無 DB**（rule 存瀏覽器 localStorage / 後端記憶體） | PostgreSQL、事件中心、報表 |
+| 持久化 | **無 DB**，rule（prompt）存後端 `rules.json`（掛 volume，可儲存/讀取沿用） | PostgreSQL、事件中心、報表 |
 | 權限 | 無登入（或單一存取密碼，見 §9） | JWT、RBAC、多租戶 |
 | 部署 | **單一容器、單一對外 port 4014** | Nginx + Next + Celery + Redis + PG 全套 |
 
@@ -59,8 +59,10 @@ POC 用**單一 FastAPI 服務**同時做三件事，全部掛在 port 4014：
 │  GET  /                 → 回傳 index.html / 靜態檔                     │
 │  POST /api/analyze      → 影像 → VLM → 解析 → 判斷觸發                 │
 │                           → 觸發則 sendPhoto 到 Telegram             │
+│  GET/POST/DELETE /api/rules → rule（prompt）的儲存 / 讀取 / 刪除      │
 │  GET  /api/health       → 檢查 Ollama / Telegram 可達                 │
 │  in-memory: 每條 rule 的 cooldown 狀態                                │
+│  持久化:    rules.json（掛 volume，容器重啟/換瀏覽器都還在）          │
 └──────────────┬──────────────────────────────────┬────────────────────┘
                │ POST /v1/chat/completions          │ POST /botXXX/sendPhoto
                │ Bearer Transfer168                 │
@@ -104,7 +106,17 @@ POC 用**單一 FastAPI 服務**同時做三件事，全部掛在 port 4014：
 
 ## 5. Rule 資料結構（POC 版）
 
-一條 rule 就是一個偵測任務。POC 用前端表單建立，存 localStorage，每次 `/api/analyze` 連同影像送上來（後端無狀態，cooldown 除外）。
+一條 rule 就是一個偵測任務（含使用者輸入的自然語言 prompt）。POC 用前端表單建立，**存到後端 `rules.json`（掛 Docker volume）持久化**，下次開頁面自動從 `GET /api/rules` 讀回沿用，不會因為重整或換瀏覽器而消失。
+
+**Rules 持久化 API：**
+
+| Method | Endpoint | 說明 |
+|---|---|---|
+| GET | `/api/rules` | 讀取所有已儲存的 rule（開頁載入用） |
+| POST | `/api/rules` | 新增 / 更新一條 rule（含 prompt、condition、cooldown 等） |
+| DELETE | `/api/rules/{id}` | 刪除一條 rule |
+
+> POC 偵測時，前端仍把「目前啟用的 rules」連同影像 POST 給 `/api/analyze`；`rules.json` 只負責「跨 session 記住使用者寫過的 prompt」，後端推理本身維持無狀態（cooldown 除外）。
 
 ```jsonc
 {
@@ -193,9 +205,14 @@ curl -s https://ollama.transferhelper.com/v1/chat/completions \
 
 ## 7. Telegram 整合
 
-**前置（你需要先準備，見 §10）：**
-1. 在 Telegram 找 `@BotFather` → `/newbot` → 拿到 **bot token**（形如 `123456:ABC-DEF...`）
-2. 取得 **chat_id**：用手機對你的 bot 傳任意訊息一次 → 後端呼叫 `getUpdates` 或提供一個 `/api/telegram/probe` 端點把 chat_id 撈出來填進設定。
+**Bot 已建立（2026-06-24）：**
+- Bot：**`@VigilAi_beta_bot`**（連結 <https://t.me/VigilAi_beta_bot>）
+- Bot Token：`8719405273:AAFMQclCVOZxv1dPScESfD3wssNpODCnyxM`
+  ⚠️ 此 token 等同 bot 的完整控制權，正式環境請改用 `.env` / secret 帶入，勿寫死在程式或公開 repo。
+
+**還需要 chat_id（你要做一次）：**
+1. 用手機打開 <https://t.me/VigilAi_beta_bot> → 對 bot 傳任意一則訊息（例如 `/start`）
+2. POC 提供 `GET /api/telegram/probe` 端點：後端呼叫 `getUpdates` 把最近對話的 `chat_id` 撈出來顯示，填進設定即可。
 
 **觸發時送出（帶圖）：**
 ```bash
@@ -223,18 +240,34 @@ services:
     ports:
       - "4014:8000"          # 對外唯一 port
     environment:
-      OLLAMA_BASE_URL: "https://ollama.transferhelper.com/v1"
-      OLLAMA_API_KEY:  "Transfer168"
-      OLLAMA_MODEL:    "qwen2.5vl:7b"
-      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
-      TELEGRAM_CHAT_ID:   "${TELEGRAM_CHAT_ID}"
-      # 可選：存取密碼（見 §9）
-      ACCESS_PASSWORD: "${ACCESS_PASSWORD:-}"
+      # 密鑰一律從 .env 帶入，compose 不寫死；缺值用 :? 讓 compose 直接報錯
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-https://ollama.transferhelper.com/v1}"
+      OLLAMA_API_KEY:  "${OLLAMA_API_KEY:?OLLAMA_API_KEY is required}"
+      OLLAMA_MODEL:    "${OLLAMA_MODEL:-qwen2.5vl:7b}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required}"
+      TELEGRAM_CHAT_ID:   "${TELEGRAM_CHAT_ID:-}"
+      ACCESS_PASSWORD: "${ACCESS_PASSWORD:?ACCESS_PASSWORD must be set}"
+    volumes:
+      - ./data:/app/data        # rules.json 等持久化檔案
     restart: unless-stopped
 ```
 
+對應 `.env`（**所有密鑰只放這裡**，已被 `.gitignore` 排除，勿提交）：
+
+```dotenv
+OLLAMA_API_KEY=Transfer168
+TELEGRAM_BOT_TOKEN=8719405273:AAFMQclCVOZxv1dPScESfD3wssNpODCnyxM
+TELEGRAM_CHAT_ID=          # 用 /api/telegram/probe 撈到後填入
+ACCESS_PASSWORD=Transfer123
+```
+
+> **安全處理（依自動審查調整）**：compose 與程式碼**不再寫死任何密鑰**，全部走 `.env`；
+> `ACCESS_PASSWORD` 未設定時服務 **fail closed**（受保護端點回 503，不會放行）；
+> 密碼比對用 `hmac.compare_digest`（防 timing attack）。
+
 - 後端 FastAPI 監聽容器內 8000，對外映射 4014。
 - 前端靜態檔由 FastAPI `StaticFiles` 直接 serve，**不需要 Nginx / Next.js**。
+- rule（prompt）持久化在 `./data/rules.json`，掛 volume 後容器重啟仍保留。
 - `docker compose up -d` 後開 `http://localhost:4014`。
 
 ---
@@ -257,8 +290,8 @@ services:
 ## 10. 你需要提供 / 待確認的東西（缺什麼）
 
 **必須提供（否則無法 demo）：**
-- [ ] **Telegram Bot Token**（@BotFather 申請）
-- [ ] **Telegram Chat ID**（對 bot 傳一則訊息後可撈出；POC 會提供 `/api/telegram/probe` 幫忙撈）
+- [x] **Telegram Bot Token** — 已建立 `@VigilAi_beta_bot`，token `8719405273:AAFMQclCVOZxv1dPScESfD3wssNpODCnyxM`
+- [ ] **Telegram Chat ID** — 你對 `@VigilAi_beta_bot` 傳一則訊息後，用 `/api/telegram/probe` 撈出
 - [ ] 確認外部 Ollama 端點現在仍可用、`qwen2.5vl:7b` 仍在清單（PRD 註記是 2026-06-10 實測；動工前我會先打一次 `/v1/models` 驗證）
 
 ### 已確認決策（2026-06-24）
@@ -268,7 +301,7 @@ services:
 | Q1 | 偵測間隔 / cooldown | 截圖間隔預設 **3 秒**；cooldown 預設 60–120 秒（per-rule 可調） | 偵測引擎參數 |
 | Q2 | 存取方式 | ✅ **只在本機 localhost 用** | **不需要 TLS / tunnel**；webcam 直接可用，部署最簡單。⚠️ 換成別台機器開頁面就會失效，屆時才需補 https |
 | Q3 | 多 rule 呼叫策略 | ✅ **一條 rule 一次 VLM 呼叫**（序列） | 結果乾淨好除錯；建議 rule 數 ≤ 3 控制延遲 |
-| Q4 | 存取密碼 | ✅ **加一道簡單密碼**（`ACCESS_PASSWORD`，前端輸入→後端比對） | 擋路人誤用 VLM key / bot |
+| Q4 | 存取密碼 | ✅ **加一道簡單密碼**：`ACCESS_PASSWORD = Transfer123`（前端輸入→後端比對） | 擋路人誤用 VLM key / bot |
 | Q5 | 前端 UI | ✅ **完整單頁**：即時畫面 + 每 rule 狀態燈 + 即時 VLM log + rule 新增/啟停（單頁 vanilla JS） | demo 效果完整 |
 
 ---

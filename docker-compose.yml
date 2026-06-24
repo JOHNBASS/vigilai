@@ -1,0 +1,16 @@
+services:
+  vigilai-poc:
+    build: .
+    ports:
+      - "4014:8000"            # 對外唯一 port
+    environment:
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-https://ollama.transferhelper.com/v1}"
+      OLLAMA_API_KEY: "${OLLAMA_API_KEY:?OLLAMA_API_KEY is required（請在 .env 設定）}"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-qwen2.5vl:7b}"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN is required（請在 .env 設定）}"
+      TELEGRAM_CHAT_ID: "${TELEGRAM_CHAT_ID:-}"
+      ACCESS_PASSWORD: "${ACCESS_PASSWORD:?ACCESS_PASSWORD must be set（請在 .env 設定）}"
+      DATA_DIR: "/app/data"
+    volumes:
+      - ./data:/app/data        # rules.json / settings.json 持久化
+    restart: unless-stopped

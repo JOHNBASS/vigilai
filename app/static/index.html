@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VigilAI POC</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <!-- 密碼 gate -->
+  <div id="gate" class="gate">
+    <div class="gate-box">
+      <h1>VigilAI <span class="tag">POC</span></h1>
+      <p>Webcam Prompt Detection</p>
+      <input id="pw" type="password" placeholder="存取密碼" autocomplete="current-password" />
+      <button id="loginBtn">進入</button>
+      <div id="gateErr" class="err"></div>
+    </div>
+  </div>
+
+  <!-- 主畫面 -->
+  <div id="app" class="app hidden">
+    <header>
+      <h1>VigilAI <span class="tag">POC</span></h1>
+      <div class="status">
+        <span id="modelBadge" class="badge">model: -</span>
+        <span id="tgBadge" class="badge">Telegram: -</span>
+        <span id="ollamaBadge" class="badge">Ollama: -</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- 左：攝影機 + 控制 -->
+      <section class="col cam-col">
+        <div class="video-wrap">
+          <video id="video" autoplay playsinline muted></video>
+          <canvas id="canvas" class="hidden"></canvas>
+        </div>
+        <div class="controls">
+          <button id="camBtn">開啟攝影機</button>
+          <label>間隔(秒)
+            <input id="interval" type="number" min="1" max="60" value="3" />
+          </label>
+          <button id="runBtn" disabled>開始偵測</button>
+        </div>
+        <div class="tg-setup">
+          <strong>Telegram</strong>
+          <button id="probeBtn" class="small">撈 chat_id</button>
+          <button id="tgTestBtn" class="small">測試通知</button>
+          <span id="tgInfo" class="muted"></span>
+        </div>
+      </section>
+
+      <!-- 中：規則 -->
+      <section class="col rules-col">
+        <div class="col-head">
+          <h2>偵測規則</h2>
+          <button id="addRuleBtn" class="small">+ 新增</button>
+        </div>
+        <div id="rulesList" class="rules-list"></div>
+      </section>
+
+      <!-- 右：log -->
+      <section class="col log-col">
+        <div class="col-head">
+          <h2>即時 Log</h2>
+          <button id="clearLogBtn" class="small">清除</button>
+        </div>
+        <div id="log" class="log"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- 規則編輯 modal -->
+  <div id="ruleModal" class="modal hidden">
+    <div class="modal-box">
+      <h3 id="ruleModalTitle">新增規則</h3>
+      <input type="hidden" id="r_id" />
+      <label>名稱<input id="r_name" placeholder="例如：高溫警報" /></label>
+      <label>Prompt（自然語言描述要偵測什麼）
+        <textarea id="r_prompt" rows="3" placeholder="例如：讀出畫面中溫度計顯示的數字"></textarea>
+      </label>
+      <label>觸發型態
+        <select id="r_type">
+          <option value="boolean">布林（是/否偵測，如火災、手勢、瞌睡）</option>
+          <option value="numeric">數值（讀數字後比較，如溫度 ≥ 38）</option>
+        </select>
+      </label>
+      <div id="numericRow" class="row hidden">
+        <label>運算子
+          <select id="r_operator">
+            <option>&gt;=</option><option>&lt;=</option><option>&gt;</option>
+            <option>&lt;</option><option>==</option>
+          </select>
+        </label>
+        <label>門檻值<input id="r_value" type="number" step="any" placeholder="38" /></label>
+      </div>
+      <div id="boolRow" class="row">
+        <label>信心門檻 (0-100)<input id="r_conf" type="number" min="0" max="100" value="60" /></label>
+      </div>
+      <div class="row">
+        <label>Cooldown(秒)<input id="r_cooldown" type="number" min="0" value="60" /></label>
+        <label>通知前綴<input id="r_notify" placeholder="🔥 疑似火災" /></label>
+      </div>
+      <div class="modal-actions">
+        <button id="ruleCancel" class="ghost">取消</button>
+        <button id="ruleSave">儲存</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
