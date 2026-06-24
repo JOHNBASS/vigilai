@@ -101,11 +101,28 @@ function stopLoop() {
   $("runBtn").textContent = "開始偵測";
 }
 
+let busyTimerId = null;
+function showBusy(on) {
+  const ov = $("busyOverlay");
+  if (on) {
+    const t0 = performance.now();
+    ov.classList.remove("hidden");
+    $("busyTimer").textContent = "0.0s";
+    busyTimerId = setInterval(() => {
+      $("busyTimer").textContent = ((performance.now() - t0) / 1000).toFixed(1) + "s";
+    }, 100);
+  } else {
+    ov.classList.add("hidden");
+    clearInterval(busyTimerId);
+  }
+}
+
 async function tick() {
-  if (busy) return;             // 上一輪還在跑，跳過
+  if (busy) return;             // 上一輪還在跑，跳過（避免推理塞車）
   const img = grabFrame();
   if (!img) return;
   busy = true;
+  showBusy(true);
   try {
     const r = await api("/api/analyze", { method: "POST", body: JSON.stringify({ image: img }) });
     renderResults(r);
@@ -113,6 +130,7 @@ async function tick() {
     addLog({ head: "錯誤", reason: e.message, fire: true });
   } finally {
     busy = false;
+    showBusy(false);
   }
 }
 
@@ -130,6 +148,7 @@ function renderResults(r) {
     if (res.value !== null && res.value !== undefined) detail.push(`值=${res.value}`);
     if (res.detected !== null && res.detected !== undefined) detail.push(`detected=${res.detected}`);
     if (res.confidence !== null && res.confidence !== undefined) detail.push(`conf=${res.confidence}`);
+    if (res.inference_ms) detail.push(`${(res.inference_ms / 1000).toFixed(1)}s`);
     if (res.triggered) detail.push(res.notified ? "已通知✅" : "通知失敗❌");
     addLog({ head, reason: (res.reason || res.vlm_error || "") + (detail.length ? "  [" + detail.join(" ") + "]" : ""), fire });
   }

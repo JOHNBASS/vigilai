@@ -34,6 +34,9 @@ async def infer(client: httpx.AsyncClient, image_data_url: str, rule: dict) -> d
     payload = {
         "model": OLLAMA_MODEL,
         "temperature": 0,
+        # 讓 Ollama 把模型多留在 VRAM 一段時間，減少閒置卸載造成的冷啟動
+        # （若端點 proxy 不支援此欄位會被忽略，無害）
+        "keep_alive": "30m",
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
