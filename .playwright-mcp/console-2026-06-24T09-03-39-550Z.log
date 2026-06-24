@@ -1,4 +1,0 @@
-[     129ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8777/static/style.css:0
-[     234ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8777/static/app.js:0
-[     251ms] [VERBOSE] [DOM] Password field is not contained in a form: (More info: https://goo.gl/9p2vKq) %o @ http://localhost:8777/index.html:0
-[     286ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:8777/favicon.ico:0
