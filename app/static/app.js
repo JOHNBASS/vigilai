@@ -247,14 +247,21 @@ $("probeBtn").onclick = async () => {
   $("tgInfo").textContent = "撈取中…";
   try {
     const r = await api("/api/telegram/probe");
-    if (r.ok) { $("tgInfo").textContent = `chat_id=${r.chat_id} (${r.chat_name || ""})`; refreshHealth(); }
-    else $("tgInfo").textContent = r.error;
-  } catch (e) { $("tgInfo").textContent = e.message; }
+    if (r.ok) {
+      $("tgInfo").textContent = `chat_id=${r.chat_id} (${r.chat_name || ""})`;
+      addLog({ head: "Telegram", reason: `已取得 chat_id=${r.chat_id} (${r.chat_name || ""})` });
+      refreshHealth();
+    } else {
+      $("tgInfo").textContent = r.error;
+      addLog({ head: "Telegram 撈取失敗", reason: r.error, fire: true });
+    }
+  } catch (e) { $("tgInfo").textContent = e.message; addLog({ head: "Telegram 撈取失敗", reason: e.message, fire: true }); }
 };
 $("tgTestBtn").onclick = async () => {
   $("tgInfo").textContent = "傳送測試…";
   try {
     const r = await api("/api/telegram/test", { method: "POST" });
-    $("tgInfo").textContent = r.ok ? "測試通知已送出 ✅" : "失敗：" + (r.error || r.body);
-  } catch (e) { $("tgInfo").textContent = e.message; }
+    if (r.ok) { $("tgInfo").textContent = "測試通知已送出 ✅"; addLog({ head: "Telegram", reason: "測試通知已送出 ✅，請查看手機" }); }
+    else { const msg = "失敗：" + (r.error || r.body); $("tgInfo").textContent = msg; addLog({ head: "Telegram 測試失敗", reason: r.error || r.body, fire: true }); }
+  } catch (e) { $("tgInfo").textContent = e.message; addLog({ head: "Telegram 測試失敗", reason: e.message, fire: true }); }
 };
